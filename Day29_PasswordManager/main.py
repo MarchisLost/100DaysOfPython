@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter import messagebox
 import random
 import pyperclip
+import json
 
 # ---------------------------- PASSWORD GENERATOR ------------------------------- #
 
@@ -29,23 +30,70 @@ def generatePassword():
 
     # Copies the password to the paperclip
     pyperclip.copy(password)
-    messagebox.showinfo(message='The password has been copied to ur clipboard')
+    # messagebox.showinfo(message='The password has been copied to ur clipboard')
 
 # ---------------------------- SAVE PASSWORD ------------------------------- #
 
 
 def saveData(websiteEntry, mailEntry, passwordEntry):
+    json_data = {
+        websiteEntry.get(): {
+            "email": mailEntry.get(),
+            "password": passwordEntry.get()
+        }
+    }
+
     if (not websiteEntry.get() or not mailEntry.get() or not passwordEntry.get()):
         messagebox.showerror(message='At least one of the variables is empty')
     else:
         is_ok = messagebox.askokcancel(title=websiteEntry.get(), message='U sure u wanna save it?')
         if is_ok:
-            with open("Day29_PasswordManager/data.txt", "a") as f:
-                f.write(f"{websiteEntry.get()} - {mailEntry.get()} - {passwordEntry.get()}\n")
+            try:
+                with open("Day29_PasswordManager/data.json", "r") as f:
+                    # Reading old data
+                    data = json.load(f)
+            except FileNotFoundError:
+                with open("Day29_PasswordManager/data.json", "w") as f:
+                    json.dump(json_data, f, indent=4)
+            except ValueError:
+                with open("Day29_PasswordManager/data.json", "w") as f:
+                    json.dump(json_data, f, indent=4)
+            else:
+                # Update old data with new data
+                data.update(json_data)
+                with open("Day29_PasswordManager/data.json", "w") as f:
+                    # Saving updated data
+                    json.dump(data, f, indent=4)
+            finally:
+                # Clear data on entries
+                websiteEntry.delete(0, END)
+                passwordEntry.delete(0, END)
 
-            # Clear data on entries
-            websiteEntry.delete(0, END)
-            passwordEntry.delete(0, END)
+
+def searchData(websiteEntry):
+    try:
+        with open("Day29_PasswordManager/data.json", "r") as f:
+            # Reading data
+            data = json.load(f)
+    except FileNotFoundError:
+        # Showing no file message
+        messagebox.showinfo(message='No Data File Found.')
+    except ValueError as err1:
+        print(err1)
+    else:
+        # Get data
+        # found = ""
+        # for website in data:
+        #     if (websiteEntry.get() == website):
+        #         found = messagebox.showinfo(message=f"Email: {data[website]['email']}\nPassword: {data[website]['password']}")
+
+        # if (not found):
+        #     messagebox.showinfo(message='No Account Found.')
+        # This is same as above but better
+        if websiteEntry.get() in data:
+            messagebox.showinfo(message=f"Email: {data[websiteEntry.get()]['email']}\nPassword: {data[websiteEntry.get()]['password']}")
+        else:
+            messagebox.showinfo(message='No Account Found.')
 
 
 # ---------------------------- UI SETUP ------------------------------- #
@@ -69,8 +117,8 @@ passwordLabel = Label(text='Password:')
 passwordLabel.grid(column=0, row=3)
 
 # Entries
-websiteEntry = Entry(width=52)
-websiteEntry.grid(column=1, row=1, columnspan=2)
+websiteEntry = Entry(width=33)
+websiteEntry.grid(column=1, row=1,)
 websiteEntry.focus()
 
 mailEntry = Entry(width=52)
@@ -81,6 +129,9 @@ passwordEntry = Entry(width=33, show='*')
 passwordEntry.grid(column=1, row=3)
 
 # Buttons
+searchButton = Button(text='Search', width=15, command=lambda: searchData(websiteEntry))
+searchButton.grid(column=2, row=1)
+
 generateButton = Button(text='Generate Password', command=generatePassword)
 generateButton.grid(column=2, row=3)
 
