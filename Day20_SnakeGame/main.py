@@ -30,6 +30,7 @@ while game_is_on:
     if (snake.segments[0].distance(food) < 15):
         food.refresh()
         scoreboard.update()
+        snake.extend()
 
     # Detect colition with walls
     if (snake.segments[0].xcor() <= -290 or snake.segments[0].xcor() >= 290) or (snake.segments[0].ycor() <= -290 or snake.segments[0].ycor() >= 290):
@@ -37,5 +38,9 @@ while game_is_on:
         scoreboard.game_over()
 
     # Detect colition with own tail
+    for seg in snake.segments[1:]:
+        if (snake.segments[0].distance(seg) < 10):
+            game_is_on = False
+            scoreboard.game_over()
 
 screen.exitonclick()
